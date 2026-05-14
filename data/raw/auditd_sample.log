@@ -19,3 +19,33 @@ type=EXECVE msg=audit(1715671209.881:110): argc=2 a0="python3" a1="script.py"
 type=PATH msg=audit(1715671210.991:111): item=0 name="/home/lukasz/projects/script.py" inode=556677 dev=08:01 mode=0100644 ouid=1000 ogid=1000 nametype=NORMAL
 type=USER_AUTH msg=audit(1715671212.101:112): pid=2001 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:authentication acct="root" exe="/usr/bin/su" hostname=? addr=? terminal=pts1 res=failed'
 type=SYSCALL msg=audit(1715671213.211:113): arch=c000003e syscall=59 success=yes exit=0 a0=55f1c2b3a2d0 items=1 ppid=2001 pid=2002 auid=1000 uid=0 gid=0 tty=pts1 ses=4 comm="su" exe="/usr/bin/su" key="priv_attempt"
+
+type=SYSCALL msg=audit(1715671234.123:100): arch=c000003e syscall=59 success=yes uid=1000 comm="ls" exe="/usr/bin/ls"
+
+type=SYSCALL msg=audit(1715671300.456:101): arch=c000003e syscall=59 success=yes uid=0 comm="sudo" exe="/usr/bin/sudo"
+
+type=SYSCALL msg=audit(1715729200.789:102): arch=c000003e syscall=59 success=no uid=1000 comm="cat" exe="/usr/bin/cat"
+
+type=SYSCALL msg=audit(1715729400.111:103): arch=c000003e syscall=59 success=yes uid=1000 comm="hydra" exe="/usr/bin/hydra"
+
+type=SYSCALL msg=audit(1715729500.222:104): arch=c000003e syscall=59 success=yes uid=1000 comm="nmap" exe="/usr/bin/nmap"
+
+type=SYSCALL msg=audit(1715730000.333:105): arch=c000003e syscall=59 success=yes uid=1000 comm="nc" exe="/usr/bin/nc"
+
+type=SYSCALL msg=audit(1715730100.444:106): arch=c000003e syscall=59 success=yes uid=1000 comm="netcat" exe="/usr/bin/netcat"
+
+type=SYSCALL msg=audit(1715730200.555:107): arch=c000003e syscall=59 success=no uid=0 comm="chmod" exe="/usr/bin/chmod"
+
+type=SYSCALL msg=audit(1715730300.666:108): arch=c000003e syscall=59 success=yes uid=1000 comm="python3" exe="/usr/bin/python3"
+
+type=SYSCALL msg=audit(1715730400.777:109): arch=c000003e syscall=59 success=yes uid=0 comm="bash" exe="/usr/bin/bash"
+
+type=SYSCALL msg=audit(1715730500.888:110): arch=c000003e syscall=59 success=no uid=1000 comm="rm" exe="/usr/bin/rm"
+
+type=SYSCALL msg=audit(1715730600.999:111): arch=c000003e syscall=59 success=yes uid=1000 comm="curl" exe="/usr/bin/curl"
+
+type=SYSCALL msg=audit(1715730700.111:112): arch=c000003e syscall=59 success=yes uid=0 comm="hydra" exe="/usr/bin/hydra"
+
+type=SYSCALL msg=audit(1715730800.222:113): arch=c000003e syscall=59 success=no uid=0 comm="nmap" exe="/usr/bin/nmap"
+
+type=SYSCALL msg=audit(1715730900.333:114): arch=c000003e syscall=59 success=yes uid=1000 comm="nano" exe="/usr/bin/nano"
