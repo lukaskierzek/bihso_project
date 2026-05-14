@@ -1,0 +1,21 @@
+type=SYSCALL msg=audit(1715671201.001:101): arch=c000003e syscall=59 success=yes exit=0 a0=55f1c2b3a2d0 a1=55f1c2b3a3f0 a2=55f1c2b3a4f0 items=2 ppid=1123 pid=1456 auid=1000 uid=1000 gid=1000 tty=pts0 ses=3 comm="sudo" exe="/usr/bin/sudo" key="priv_esc"
+type=EXECVE msg=audit(1715671201.001:101): argc=3 a0="sudo" a1="cat" a2="/etc/shadow"
+type=CWD msg=audit(1715671201.001:101): cwd="/home/lukasz"
+type=PATH msg=audit(1715671201.001:101): item=0 name="/usr/bin/cat" inode=123456 dev=08:01 mode=0100755 ouid=0 ogid=0 nametype=NORMAL
+type=PATH msg=audit(1715671201.001:101): item=1 name="/etc/shadow" inode=234567 dev=08:01 mode=0100400 ouid=0 ogid=0 nametype=NORMAL
+type=USER_AUTH msg=audit(1715671202.112:102): pid=1789 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:authentication acct="lukasz" exe="/usr/sbin/sshd" hostname=192.168.1.50 addr=192.168.1.50 terminal=ssh res=success'
+type=USER_ACCT msg=audit(1715671202.113:103): pid=1789 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:accounting acct="lukasz" exe="/usr/sbin/sshd" hostname=192.168.1.50 addr=192.168.1.50 terminal=ssh res=success'
+type=SYSCALL msg=audit(1715671203.221:104): arch=c000003e syscall=2 success=yes exit=3 a0=7ffdfc1b2c10 a1=0 a2=1 items=1 ppid=1456 pid=1457 auid=1000 uid=1000 gid=1000 tty=pts0 ses=3 comm="cat" exe="/usr/bin/cat" key="file_read"
+type=PATH msg=audit(1715671203.221:104): item=0 name="/var/log/auth.log" inode=345678 dev=08:01 mode=0100644 ouid=0 ogid=4 nametype=NORMAL
+type=USER_CMD msg=audit(1715671204.331:105): pid=1458 uid=1000 auid=1000 ses=3 msg='cwd="/home/lukasz" cmd="ls -la /etc" terminal=pts0 res=success'
+type=AVC msg=audit(1715671205.441:106): avc:  denied  { write } for  pid=2022 comm="nginx" name="error.log" dev="sda1" ino=998877 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
+type=NETFILTER_CFG msg=audit(1715671206.551:107): table=filter family=2 entries=45 op=xt_replace pid=1 comm="iptables" res=success
+type=SYSCALL msg=audit(1715671207.661:108): arch=c000003e syscall=59 success=yes exit=0 a0=55f1c2b3a2d0 a1=55f1c2b3a3f0 items=1 ppid=1456 pid=1460 auid=1000 uid=1000 gid=1000 tty=pts0 ses=3 comm="bash" exe="/usr/bin/bash" key="shell_exec"
+type=EXECVE msg=audit(1715671207.661:108): argc=1 a0="bash"
+type=CWD msg=audit(1715671208.771:109): cwd="/home/lukasz/projects"
+type=USER_CMD msg=audit(1715671208.771:109): pid=1461 uid=1000 auid=1000 ses=3 msg='cwd="/home/lukasz/projects" cmd="python3 script.py" terminal=pts0 res=success'
+type=SYSCALL msg=audit(1715671209.881:110): arch=c000003e syscall=59 success=yes exit=0 a0=55f1c2b3a2d0 items=1 ppid=1461 pid=1462 auid=1000 uid=1000 gid=1000 tty=pts0 ses=3 comm="python3" exe="/usr/bin/python3" key="exec_python"
+type=EXECVE msg=audit(1715671209.881:110): argc=2 a0="python3" a1="script.py"
+type=PATH msg=audit(1715671210.991:111): item=0 name="/home/lukasz/projects/script.py" inode=556677 dev=08:01 mode=0100644 ouid=1000 ogid=1000 nametype=NORMAL
+type=USER_AUTH msg=audit(1715671212.101:112): pid=2001 uid=0 auid=4294967295 ses=4294967295 msg='op=PAM:authentication acct="root" exe="/usr/bin/su" hostname=? addr=? terminal=pts1 res=failed'
+type=SYSCALL msg=audit(1715671213.211:113): arch=c000003e syscall=59 success=yes exit=0 a0=55f1c2b3a2d0 items=1 ppid=2001 pid=2002 auid=1000 uid=0 gid=0 tty=pts1 ses=4 comm="su" exe="/usr/bin/su" key="priv_attempt"
