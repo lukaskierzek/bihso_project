@@ -1,10 +1,13 @@
 from sklearn.ensemble import IsolationForest
+import pandas as pd
+from config import ISOLATION_FOREST_CONTAMINATION
 
-
-def train_isolation_forest(df):
+def train_isolation_forest(
+        df: pd.DataFrame
+) -> IsolationForest:
 
     model = IsolationForest(
-        contamination=0.05,
+        contamination=ISOLATION_FOREST_CONTAMINATION,
         random_state=42
     )
 

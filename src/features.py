@@ -24,6 +24,10 @@ def records_to_features(
                 int(record.success)
                 if record.success is not None
                 else 0,
+
+            "is_night":
+                1 if (record.timestamp and (record.timestamp.hour >= 22 or record.timestamp.hour < 5))
+                else 0,
         })
 
     return pd.DataFrame(rows)

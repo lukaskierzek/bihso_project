@@ -65,7 +65,10 @@ def calculate_baseline_metrics(
 
         expected = record.command in CHECKED_COMMANDS
 
-        predicted = bool(run_all_rules(record))
+        predicted = any(
+            detection.rule_name == "Suspicious Command"
+            for detection in run_all_rules(record)
+        )
 
         if expected and predicted:
             tp += 1
