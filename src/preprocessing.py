@@ -2,6 +2,7 @@ from collections import Counter
 
 import pandas as pd
 
+from config import SUSPICIOUS_COMMANDS
 from src.log_record import LogRecord
 from src.rules import run_all_rules
 
@@ -51,3 +52,64 @@ def detections_to_dataframe(
             })
 
     return pd.DataFrame(rows)
+
+def calculate_baseline_metrics(
+        records: list[LogRecord]
+) -> dict:
+
+    CHECKED_COMMANDS = SUSPICIOUS_COMMANDS
+
+    tp = fp = tn = fn = 0
+
+    for record in records:
+
+        expected = record.command in CHECKED_COMMANDS
+
+        predicted = bool(run_all_rules(record))
+
+        if expected and predicted:
+            tp += 1
+
+        elif expected and not predicted:
+            fn += 1
+
+        elif not expected and predicted:
+            fp += 1
+
+        else:
+            tn += 1
+
+    precision = (
+        tp / (tp + fp)
+        if (tp + fp) > 0
+        else 0
+    )
+
+    recall = (
+        tp / (tp + fn)
+        if (tp + fn) > 0
+        else 0
+    )
+
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0
+    )
+
+    accuracy = (
+        (tp + tn) / (tp + tn + fp + fn)
+        if (tp + tn + fp + fn) > 0
+        else 0
+    )
+
+    return {
+        "tp": tp,
+        "fp": fp,
+        "tn": tn,
+        "fn": fn,
+        "accuracy": round(accuracy * 100, 2),
+        "precision": round(precision * 100, 2),
+        "recall": round(recall * 100, 2),
+        "f1": round(f1 * 100, 2),
+    }

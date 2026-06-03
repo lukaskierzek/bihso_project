@@ -1,5 +1,5 @@
 pandas
 numpy
-pyyaml
 jupyterlab
 matplotlib
+pytest

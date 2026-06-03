@@ -16,7 +16,7 @@ class DetectionResult:
     reason: str
 
     def __str__(self) -> str:
-        return f"!!WARNING!! {self.rule_name}: {self.reason}"
+        return f"[ALERT] {self.rule_name}: {self.reason}"
 
 
 def detect_suspicious_command(record: LogRecord) -> DetectionResult:
