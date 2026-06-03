@@ -4,7 +4,7 @@ import pandas as pd
 
 from config import SUSPICIOUS_COMMANDS
 from src.log_record import LogRecord
-from src.rules import run_all_rules
+from src.rules import run_all_rules, run_all_rules_with_context
 
 
 def calculate_detection_statistics(
@@ -14,10 +14,9 @@ def calculate_detection_statistics(
     anomaly_logs = 0
 
     rule_counter = Counter()
+    detections_by_record = run_all_rules_with_context(records)
 
-    for record in records:
-
-        detections = run_all_rules(record)
+    for detections in detections_by_record:
 
         if detections:
             anomaly_logs += 1
@@ -37,10 +36,9 @@ def detections_to_dataframe(
         records: list[LogRecord]
 ) -> pd.DataFrame:
     rows = []
+    detections_by_record = run_all_rules_with_context(records)
 
-    for record in records:
-
-        detections = run_all_rules(record)
+    for record, detections in zip(records, detections_by_record):
 
         for detection in detections:
             rows.append({
@@ -52,6 +50,16 @@ def detections_to_dataframe(
             })
 
     return pd.DataFrame(rows)
+
+
+def get_rule_anomaly_indices(records: list[LogRecord]) -> set[int]:
+    detections_by_record = run_all_rules_with_context(records)
+
+    return {
+        index
+        for index, detections in enumerate(detections_by_record)
+        if detections
+    }
 
 def calculate_baseline_metrics(
         records: list[LogRecord]
@@ -116,3 +124,38 @@ def calculate_baseline_metrics(
         "recall": round(recall * 100, 2),
         "f1": round(f1 * 100, 2),
     }
+
+
+def compare_detection_methods(
+    records: list[LogRecord],
+    isolation_predictions,
+    lof_predictions
+) -> pd.DataFrame:
+    rule_indices = get_rule_anomaly_indices(records)
+    isolation_indices = {
+        index
+        for index, prediction in enumerate(isolation_predictions)
+        if prediction == -1
+    }
+    lof_indices = {
+        index
+        for index, prediction in enumerate(lof_predictions)
+        if prediction == -1
+    }
+
+    methods = {
+        "Rule-based": rule_indices,
+        "Isolation Forest": isolation_indices,
+        "Local Outlier Factor": lof_indices,
+    }
+
+    rows = []
+    for method_name, indices in methods.items():
+        rows.append({
+            "method": method_name,
+            "detected_anomalies": len(indices),
+            "percentage": round(len(indices) / len(records) * 100, 2) if records else 0,
+            "overlap_with_rules": len(indices & rule_indices),
+        })
+
+    return pd.DataFrame(rows)

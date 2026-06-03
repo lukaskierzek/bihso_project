@@ -6,4 +6,4 @@ __pycache__/
 .mypy_cache/
 ruff_cache/
 *.pyc
-projekt_bihso.zip
+projekt_bihso*.zip

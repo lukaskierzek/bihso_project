@@ -11,6 +11,18 @@ SUSPICIOUS_COMMANDS = [
     "netcat",
 ]
 
+ADMIN_COMMANDS = [
+    "sudo",
+    "su",
+    "chmod",
+    "chown",
+    "usermod",
+    "useradd",
+    "passwd",
+    "iptables",
+    "systemctl",
+]
+
 KNOWN_COMMANDS = [
     "ls",
     "cat",
@@ -27,10 +39,33 @@ KNOWN_COMMANDS = [
     "pwd",
     "whoami",
     "id",
+    "chmod",
+    "rm",
+    "curl",
+    "su",
+    "iptables",
 ]
 
 NIGHT_ACTIVITY_START = 22
 NIGHT_ACTIVITY_END = 5
 
+SUSPICIOUS_PATH_PREFIXES = [
+    "/tmp/",
+    "/var/tmp/",
+    "/dev/shm/",
+    "/home/",
+]
+
+TRUSTED_EXECUTABLE_PREFIXES = [
+    "/usr/bin/",
+    "/usr/sbin/",
+    "/bin/",
+    "/sbin/",
+]
+
+FAILED_OPERATION_WINDOW_SECONDS = 300
+FAILED_OPERATION_THRESHOLD = 3
+
 ISOLATION_FOREST_CONTAMINATION = 0.05
+LOCAL_OUTLIER_FACTOR_CONTAMINATION = 0.05
 RANDOM_STATE = 42
