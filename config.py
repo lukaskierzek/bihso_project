@@ -24,9 +24,13 @@ KNOWN_COMMANDS = [
     "ssh",
     "apt",
     "systemctl",
+    "pwd",
+    "whoami",
+    "id",
 ]
 
 NIGHT_ACTIVITY_START = 22
 NIGHT_ACTIVITY_END = 5
 
 ISOLATION_FOREST_CONTAMINATION = 0.05
+RANDOM_STATE = 42

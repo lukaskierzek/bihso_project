@@ -64,7 +64,7 @@ def detect_failed_command(record: LogRecord) -> DetectionResult:
     )
 
 
-def detection_night_activity(record: LogRecord) -> DetectionResult:
+def detect_night_activity(record: LogRecord) -> DetectionResult:
     if record.timestamp is None:
         return DetectionResult(
             rule_name="Night Activity",
@@ -116,7 +116,7 @@ def run_all_rules(record: LogRecord) -> list[DetectionResult]:
         detect_suspicious_command(record),
         detect_root_activity(record),
         detect_failed_command(record),
-        detection_night_activity(record),
+        detect_night_activity(record),
         detect_unknown_command(record),
     ]
 
