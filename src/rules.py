@@ -88,18 +88,6 @@ def detection_night_activity(record: LogRecord) -> DetectionResult:
         reason=""
     )
 
-
-def run_all_rules(record: LogRecord) -> list[DetectionResult]:
-    results = [
-        detect_suspicious_command(record),
-        detect_root_activity(record),
-        detect_failed_command(record),
-        detection_night_activity(record),
-        detect_unknown_command(record),
-    ]
-
-    return [result for result in results if result.is_anomaly]
-
 def detect_unknown_command(record: LogRecord) -> DetectionResult:
 
     if record.command is None:
@@ -122,3 +110,14 @@ def detect_unknown_command(record: LogRecord) -> DetectionResult:
         is_anomaly=False,
         reason=""
     )
+
+def run_all_rules(record: LogRecord) -> list[DetectionResult]:
+    results = [
+        detect_suspicious_command(record),
+        detect_root_activity(record),
+        detect_failed_command(record),
+        detection_night_activity(record),
+        detect_unknown_command(record),
+    ]
+
+    return [result for result in results if result.is_anomaly]

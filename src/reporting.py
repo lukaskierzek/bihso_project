@@ -11,6 +11,7 @@ def print_detection_results(
         return
 
     print("=" * 80)
+    print(f"Timestamp: {record.timestamp}")
     print(record.raw_message)
     print()
 

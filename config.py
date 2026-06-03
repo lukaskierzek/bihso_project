@@ -20,6 +20,10 @@ KNOWN_COMMANDS = [
     "python3",
     "grep",
     "find",
+    "sudo",
+    "ssh",
+    "apt",
+    "systemctl",
 ]
 
 NIGHT_ACTIVITY_START = 22
