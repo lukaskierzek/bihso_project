@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from config import (
     SUSPICIOUS_COMMANDS,
     NIGHT_ACTIVITY_START,
-    NIGHT_ACTIVITY_END
+    NIGHT_ACTIVITY_END,
+    KNOWN_COMMANDS,
 )
 from src.log_record import LogRecord
 
@@ -13,6 +14,9 @@ class DetectionResult:
     rule_name: str
     is_anomaly: bool
     reason: str
+
+    def __str__(self) -> str:
+        return f"!!WARNING!! {self.rule_name}: {self.reason}"
 
 
 def detect_suspicious_command(record: LogRecord) -> DetectionResult:
@@ -91,6 +95,30 @@ def run_all_rules(record: LogRecord) -> list[DetectionResult]:
         detect_root_activity(record),
         detect_failed_command(record),
         detection_night_activity(record),
+        detect_unknown_command(record),
     ]
 
     return [result for result in results if result.is_anomaly]
+
+def detect_unknown_command(record: LogRecord) -> DetectionResult:
+
+    if record.command is None:
+        return DetectionResult(
+            rule_name="Unknown Command",
+            is_anomaly=False,
+            reason=""
+        )
+
+    if record.command not in KNOWN_COMMANDS:
+
+        return DetectionResult(
+            rule_name="Unknown Command",
+            is_anomaly=True,
+            reason=f"Unknown command detected: {record.command}"
+        )
+
+    return DetectionResult(
+        rule_name="Unknown Command",
+        is_anomaly=False,
+        reason=""
+    )

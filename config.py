@@ -11,5 +11,16 @@ SUSPICIOUS_COMMANDS = [
     "netcat",
 ]
 
+KNOWN_COMMANDS = [
+    "ls",
+    "cat",
+    "nano",
+    "vim",
+    "bash",
+    "python3",
+    "grep",
+    "find",
+]
+
 NIGHT_ACTIVITY_START = 22
 NIGHT_ACTIVITY_END = 5
