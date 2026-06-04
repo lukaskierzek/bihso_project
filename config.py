@@ -54,7 +54,6 @@ SUSPICIOUS_PATH_PREFIXES = [
     "/tmp/",
     "/var/tmp/",
     "/dev/shm/",
-    "/home/",
 ]
 
 TRUSTED_EXECUTABLE_PREFIXES = [
