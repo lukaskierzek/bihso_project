@@ -3,6 +3,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 RAW_LOG_PATH = BASE_DIR / "data/raw/auditd_sample.log"
+LABELS_PATH = BASE_DIR / "data/labels.csv"
 
 SUSPICIOUS_COMMANDS = [
     "hydra",

@@ -1,7 +1,10 @@
 import re
 from datetime import datetime
+from typing import TypeVar
 
 from src.log_record import LogRecord
+
+T = TypeVar("T")
 
 TYPE_PATTERN = re.compile(r"type=([A-Z_]+)")
 UID_PATTERN = re.compile(r"uid=(\d+)")
@@ -90,3 +93,62 @@ def parse_line(line: str) -> LogRecord:
         success=_parse_success(success_raw, result_raw),
         raw_message=line.strip()
     )
+
+
+def _first_present(values: list[T | None]) -> T | None:
+    for value in values:
+        if value is not None:
+            return value
+
+    return None
+
+
+def _merge_records(records: list[LogRecord]) -> LogRecord:
+    first_record = records[0]
+
+    return LogRecord(
+        timestamp=_first_present([record.timestamp for record in records]),
+        audit_id=first_record.audit_id,
+        event_type=",".join(
+            record.event_type
+            for record in records
+            if record.event_type is not None
+        ),
+        user_id=_first_present([record.user_id for record in records]),
+        audit_user_id=_first_present([record.audit_user_id for record in records]),
+        process_id=_first_present([record.process_id for record in records]),
+        command=_first_present([record.command for record in records]),
+        executable=_first_present([record.executable for record in records]),
+        path=_first_present([record.path for record in records]),
+        cwd=_first_present([record.cwd for record in records]),
+        success=_first_present([record.success for record in records]),
+        raw_message="\n".join(record.raw_message for record in records),
+    )
+
+
+def parse_lines_grouped(lines: list[str]) -> list[LogRecord]:
+    grouped_records: list[LogRecord] = []
+    current_group: list[LogRecord] = []
+    current_audit_id: str | None = None
+
+    for line in lines:
+        if not line.strip():
+            continue
+
+        record = parse_line(line)
+
+        if record.audit_id is None:
+            grouped_records.append(record)
+            continue
+
+        if current_group and record.audit_id != current_audit_id:
+            grouped_records.append(_merge_records(current_group))
+            current_group = []
+
+        current_group.append(record)
+        current_audit_id = record.audit_id
+
+    if current_group:
+        grouped_records.append(_merge_records(current_group))
+
+    return grouped_records

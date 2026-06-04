@@ -159,3 +159,70 @@ def compare_detection_methods(
         })
 
     return pd.DataFrame(rows)
+
+
+def _calculate_binary_metrics(
+    y_true: list[int],
+    y_pred: list[int],
+    method_name: str
+) -> dict:
+    tp = fp = tn = fn = 0
+
+    for expected, predicted in zip(y_true, y_pred):
+        if expected == 1 and predicted == 1:
+            tp += 1
+        elif expected == 0 and predicted == 1:
+            fp += 1
+        elif expected == 0 and predicted == 0:
+            tn += 1
+        elif expected == 1 and predicted == 0:
+            fn += 1
+
+    precision = tp / (tp + fp) if (tp + fp) else 0
+    recall = tp / (tp + fn) if (tp + fn) else 0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0
+    accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) else 0
+
+    return {
+        "method": method_name,
+        "tp": tp,
+        "fp": fp,
+        "tn": tn,
+        "fn": fn,
+        "accuracy": round(accuracy * 100, 2),
+        "precision": round(precision * 100, 2),
+        "recall": round(recall * 100, 2),
+        "f1": round(f1 * 100, 2),
+    }
+
+
+def calculate_labeled_metrics(
+    records: list[LogRecord],
+    labels,
+    isolation_predictions,
+    lof_predictions
+) -> pd.DataFrame:
+    y_true = list(labels.astype(int))
+    rule_indices = get_rule_anomaly_indices(records)
+
+    predictions = {
+        "Rule-based": [
+            1 if index in rule_indices else 0
+            for index in range(len(records))
+        ],
+        "Isolation Forest": [
+            1 if prediction == -1 else 0
+            for prediction in isolation_predictions
+        ],
+        "Local Outlier Factor": [
+            1 if prediction == -1 else 0
+            for prediction in lof_predictions
+        ],
+    }
+
+    rows = [
+        _calculate_binary_metrics(y_true, y_pred, method_name)
+        for method_name, y_pred in predictions.items()
+    ]
+
+    return pd.DataFrame(rows)
