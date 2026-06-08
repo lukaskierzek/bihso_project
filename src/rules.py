@@ -1,15 +1,10 @@
 from dataclasses import dataclass
 
 from config import (
-    ADMIN_COMMANDS,
-    FAILED_OPERATION_THRESHOLD,
-    FAILED_OPERATION_WINDOW_SECONDS,
-    SUSPICIOUS_COMMANDS,
-    NIGHT_ACTIVITY_START,
+    FAILED_LOGIN_THRESHOLD,
+    FAILED_LOGIN_WINDOW_SECONDS,
     NIGHT_ACTIVITY_END,
-    KNOWN_COMMANDS,
-    SUSPICIOUS_PATH_PREFIXES,
-    TRUSTED_EXECUTABLE_PREFIXES,
+    NIGHT_ACTIVITY_START,
 )
 from src.log_record import LogRecord
 
@@ -24,250 +19,102 @@ class DetectionResult:
         return f"[ALERT] {self.rule_name}: {self.reason}"
 
 
-def detect_suspicious_command(record: LogRecord) -> DetectionResult:
-    if record.command in SUSPICIOUS_COMMANDS:
-        return DetectionResult(
-            rule_name="Suspicious Command",
-            is_anomaly=True,
-            reason=f"Detected suspicious command: {record.command}"
-        )
-
-    return DetectionResult(
-        rule_name="Suspicious Command",
-        is_anomaly=False,
-        reason=""
-    )
+def _result(rule_name: str, reason: str = "") -> DetectionResult:
+    return DetectionResult(rule_name=rule_name, is_anomaly=bool(reason), reason=reason)
 
 
-def detect_root_activity(record: LogRecord) -> DetectionResult:
-    if record.user_id == "0":
-        return DetectionResult(
-            rule_name="Root Activity",
-            is_anomaly=True,
-            reason="Root user activity detected"
-        )
-
-    return DetectionResult(
-        rule_name="Root Activity",
-        is_anomaly=False,
-        reason=""
-    )
+def detect_failed_password(record: LogRecord) -> DetectionResult:
+    if record.event_type == "ssh_failed_password":
+        return _result("Failed password", f"Failed SSH password for user={record.user} from ip={record.ip_address}")
+    return _result("Failed password")
 
 
-def detect_failed_command(record: LogRecord) -> DetectionResult:
-    if record.success is False:
-        return DetectionResult(
-            rule_name="Failed Command",
-            is_anomaly=True,
-            reason="Command execution failed"
-        )
+def detect_invalid_user(record: LogRecord) -> DetectionResult:
+    if record.event_type == "ssh_invalid_user":
+        return _result("Invalid user", f"Login attempt for non-existing user={record.user} from ip={record.ip_address}")
+    return _result("Invalid user")
 
-    return DetectionResult(
-        rule_name="Failed Command",
-        is_anomaly=False,
-        reason=""
-    )
+
+def detect_authentication_failure(record: LogRecord) -> DetectionResult:
+    if record.event_type == "authentication_failure":
+        return _result("Authentication failure", f"PAM authentication failure for user={record.user} from ip={record.ip_address}")
+    return _result("Authentication failure")
+
+
+def detect_root_login(record: LogRecord) -> DetectionResult:
+    if record.user == "root" and record.event_type in {"ssh_login_success", "ssh_failed_password", "ssh_invalid_user", "authentication_failure"}:
+        return _result("Root login", f"Root authentication event type={record.event_type} from ip={record.ip_address}")
+    return _result("Root login")
 
 
 def detect_night_activity(record: LogRecord) -> DetectionResult:
     if record.timestamp is None:
-        return DetectionResult(
-            rule_name="Night Activity",
-            is_anomaly=False,
-            reason=""
-        )
+        return _result("Unusual hour")
 
     hour = record.timestamp.hour
-    is_night: bool = (hour >= NIGHT_ACTIVITY_START or hour < NIGHT_ACTIVITY_END)
+    is_night = hour >= NIGHT_ACTIVITY_START or hour < NIGHT_ACTIVITY_END
+    is_interesting = record.event_type in {
+        "ssh_login_success",
+        "ssh_failed_password",
+        "ssh_invalid_user",
+        "authentication_failure",
+        "sudo_command",
+        "password_changed",
+    }
 
-    if is_night:
-        return DetectionResult(
-            rule_name="Night Activity",
-            is_anomaly=True,
-            reason=f"Activity detected at unusual hour: {hour}"
-        )
-
-    return DetectionResult(
-        rule_name="Night Activity",
-        is_anomaly=False,
-        reason=""
-    )
-
-def detect_unknown_command(record: LogRecord) -> DetectionResult:
-
-    if record.command is None:
-        return DetectionResult(
-            rule_name="Unknown Command",
-            is_anomaly=False,
-            reason=""
-        )
-
-    if record.command not in KNOWN_COMMANDS:
-
-        return DetectionResult(
-            rule_name="Unknown Command",
-            is_anomaly=True,
-            reason=f"Unknown command detected: {record.command}"
-        )
-
-    return DetectionResult(
-        rule_name="Unknown Command",
-        is_anomaly=False,
-        reason=""
-    )
+    if is_night and is_interesting:
+        return _result("Unusual hour", f"Security-relevant event at unusual hour={hour}")
+    return _result("Unusual hour")
 
 
-def detect_suspicious_executable_path(record: LogRecord) -> DetectionResult:
-    checked_paths = [
-        path
-        for path in [record.executable, record.path]
-        if path
-    ]
-
-    for path in checked_paths:
-        if any(path.startswith(prefix) for prefix in SUSPICIOUS_PATH_PREFIXES):
-            return DetectionResult(
-                rule_name="Suspicious Executable Path",
-                is_anomaly=True,
-                reason=f"Suspicious path used: {path}"
-            )
-
-    if record.executable and not any(
-        record.executable.startswith(prefix)
-        for prefix in TRUSTED_EXECUTABLE_PREFIXES
-    ):
-        return DetectionResult(
-            rule_name="Suspicious Executable Path",
-            is_anomaly=True,
-            reason=f"Executable outside trusted paths: {record.executable}"
-        )
-
-    return DetectionResult(
-        rule_name="Suspicious Executable Path",
-        is_anomaly=False,
-        reason=""
-    )
+def detect_sudo_usage(record: LogRecord) -> DetectionResult:
+    if record.event_type == "sudo_command":
+        return _result("Sudo usage", f"sudo by {record.source_user} as {record.target_user}: {record.command}")
+    return _result("Sudo usage")
 
 
-def detect_admin_tool(record: LogRecord) -> DetectionResult:
-    if record.command in ADMIN_COMMANDS:
-        return DetectionResult(
-            rule_name="Administrative Tool",
-            is_anomaly=True,
-            reason=f"Administrative tool executed: {record.command}"
-        )
-
-    return DetectionResult(
-        rule_name="Administrative Tool",
-        is_anomaly=False,
-        reason=""
-    )
-
-
-def detect_unusual_uid(record: LogRecord) -> DetectionResult:
-    unusual_values = {"4294967295", "65534"}
-
-    if record.user_id in unusual_values or record.audit_user_id in unusual_values:
-        return DetectionResult(
-            rule_name="Unusual UID",
-            is_anomaly=True,
-            reason=f"Unusual uid/auid combination: uid={record.user_id}, auid={record.audit_user_id}"
-        )
-
-    if record.user_id == "0" and record.audit_user_id not in (None, "0"):
-        return DetectionResult(
-            rule_name="Unusual UID",
-            is_anomaly=True,
-            reason=f"Root effective UID with non-root auid: auid={record.audit_user_id}"
-        )
-
-    return DetectionResult(
-        rule_name="Unusual UID",
-        is_anomaly=False,
-        reason=""
-    )
-
-
-def detect_unusual_event_combination(record: LogRecord) -> DetectionResult:
-    is_failed_root = record.user_id == "0" and record.success is False
-    is_admin_at_night = (
-        record.command in ADMIN_COMMANDS
-        and record.timestamp is not None
-        and (record.timestamp.hour >= NIGHT_ACTIVITY_START or record.timestamp.hour < NIGHT_ACTIVITY_END)
-    )
-
-    if is_failed_root:
-        return DetectionResult(
-            rule_name="Unusual Event Combination",
-            is_anomaly=True,
-            reason="Failed operation executed with root UID"
-        )
-
-    if is_admin_at_night:
-        return DetectionResult(
-            rule_name="Unusual Event Combination",
-            is_anomaly=True,
-            reason=f"Administrative command at unusual hour: {record.command}"
-        )
-
-    return DetectionResult(
-        rule_name="Unusual Event Combination",
-        is_anomaly=False,
-        reason=""
-    )
+def detect_password_change(record: LogRecord) -> DetectionResult:
+    if record.event_type == "password_changed" and record.source_user != record.user:
+        return _result("Password change", f"Password for {record.user} changed by {record.source_user}")
+    return _result("Password change")
 
 
 def run_all_rules(record: LogRecord) -> list[DetectionResult]:
     results = [
-        detect_suspicious_command(record),
-        detect_root_activity(record),
-        detect_failed_command(record),
+        detect_failed_password(record),
+        detect_invalid_user(record),
+        detect_authentication_failure(record),
+        detect_root_login(record),
         detect_night_activity(record),
-        detect_unknown_command(record),
-        detect_suspicious_executable_path(record),
-        detect_admin_tool(record),
-        detect_unusual_uid(record),
-        detect_unusual_event_combination(record),
+        detect_sudo_usage(record),
+        detect_password_change(record),
     ]
-
     return [result for result in results if result.is_anomaly]
 
 
-def detect_repeated_failed_operations(
-    record: LogRecord,
-    previous_records: list[LogRecord]
-) -> DetectionResult:
-    if record.timestamp is None or record.success is not False:
-        return DetectionResult(
-            rule_name="Repeated Failed Operations",
-            is_anomaly=False,
-            reason=""
-        )
+def detect_brute_force(record: LogRecord, previous_records: list[LogRecord]) -> DetectionResult:
+    if record.timestamp is None or record.ip_address is None:
+        return _result("Brute-force SSH")
+
+    if record.event_type not in {"ssh_failed_password", "ssh_invalid_user", "authentication_failure"}:
+        return _result("Brute-force SSH")
 
     failures = [
         previous
         for previous in previous_records
         if previous.timestamp is not None
-        and previous.success is False
-        and previous.user_id == record.user_id
-        and 0 <= (record.timestamp - previous.timestamp).total_seconds() <= FAILED_OPERATION_WINDOW_SECONDS
+        and previous.ip_address == record.ip_address
+        and previous.event_type in {"ssh_failed_password", "ssh_invalid_user", "authentication_failure"}
+        and 0 <= (record.timestamp - previous.timestamp).total_seconds() <= FAILED_LOGIN_WINDOW_SECONDS
     ]
 
-    if len(failures) + 1 >= FAILED_OPERATION_THRESHOLD:
-        return DetectionResult(
-            rule_name="Repeated Failed Operations",
-            is_anomaly=True,
-            reason=(
-                f"{len(failures) + 1} failed operations by uid={record.user_id} "
-                f"within {FAILED_OPERATION_WINDOW_SECONDS} seconds"
-            )
+    failure_count = len(failures) + 1
+    if failure_count >= FAILED_LOGIN_THRESHOLD:
+        return _result(
+            "Brute-force SSH",
+            f"{failure_count} failed SSH/auth events from ip={record.ip_address} within {FAILED_LOGIN_WINDOW_SECONDS}s",
         )
-
-    return DetectionResult(
-        rule_name="Repeated Failed Operations",
-        is_anomaly=False,
-        reason=""
-    )
+    return _result("Brute-force SSH")
 
 
 def run_all_rules_with_context(records: list[LogRecord]) -> list[list[DetectionResult]]:
@@ -275,14 +122,9 @@ def run_all_rules_with_context(records: list[LogRecord]) -> list[list[DetectionR
 
     for index, record in enumerate(records):
         detections = run_all_rules(record)
-        repeated_failures = detect_repeated_failed_operations(
-            record,
-            records[:index]
-        )
-
-        if repeated_failures.is_anomaly:
-            detections.append(repeated_failures)
-
+        brute_force = detect_brute_force(record, records[:index])
+        if brute_force.is_anomaly:
+            detections.append(brute_force)
         all_results.append(detections)
 
     return all_results
